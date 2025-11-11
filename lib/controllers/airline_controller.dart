@@ -19,13 +19,13 @@ class AirlineController extends GetxController {
       final data = await _service.loadAirlines();
       airlines.assignAll(data);
     } catch (e) {
-      print('❌ Error loading airlines: $e');
+      print('Error loading airlines: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// ✅ Find airline by its code
+  /// Find airline by its code
   Airline? getAirlineByCode(String code) {
     try {
       return airlines.firstWhere(

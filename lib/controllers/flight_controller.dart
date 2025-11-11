@@ -31,23 +31,19 @@ class FlightController extends GetxController {
 
       final data = await _flightService.loadFlights();
 
-      // Extract all fare itineraries
-      final itineraries = <FareItinerary>[];
-      for (var response in data) {
-        itineraries.addAll(response.fareItineraries);
-      }
-
-      fareItineraries.assignAll(itineraries);
-      filteredItineraries.assignAll(itineraries);
+      // Data is already a list of FareItinerary objects
+      fareItineraries.assignAll(data);  // Changed this
+      filteredItineraries.assignAll(data);  // Changed this
 
       // Calculate price range for filter
-      if (itineraries.isNotEmpty) {
-        final prices = itineraries.map((i) => i.fareInfo.totalFares).toList()..sort();
-        minPrice.value = prices.first as double;
-        maxPrice.value = prices.last as double;
+      if (data.isNotEmpty) {
+        final prices = data.map((i) => i.fareInfo.totalFares.totalFare).toList()..sort();
+        minPrice.value = prices.first;
+        maxPrice.value = prices.last;
       }
     } catch (e) {
       errorMessage.value = 'Failed to load flights: $e';
+      print('Error loading flights: $e');
     } finally {
       isLoading.value = false;
     }
@@ -57,12 +53,12 @@ class FlightController extends GetxController {
     var filtered = fareItineraries.toList();
 
     // Filter by cabin class
-    // if (selectedCabinClasses.isNotEmpty) {
-    //   filtered = filtered.where((itinerary) {
-    //     final cabinClass = itinerary.originDestinations.first.segment.cabinClassText;
-    //     return selectedCabinClasses.contains(cabinClass);
-    //   }).toList();
-    // }
+    if (selectedCabinClasses.isNotEmpty) {
+      filtered = filtered.where((itinerary) {
+        final cabinClass = itinerary.originDestinations.first.segment.airlineName;
+        return selectedCabinClasses.contains(cabinClass);
+      }).toList();
+    }
 
     // Filter by airline
     if (selectedAirlines.isNotEmpty) {
@@ -74,8 +70,8 @@ class FlightController extends GetxController {
 
     // Filter by price
     filtered = filtered.where((itinerary) {
-      return int.parse(itinerary.fareInfo.totalFares as String) >= minPrice.value &&
-          int.parse(itinerary.fareInfo.totalFares as String) <= maxPrice.value;
+      return itinerary.fareInfo.totalFares.totalFare >= minPrice.value &&
+          itinerary.fareInfo.totalFares.totalFare <= maxPrice.value;
     }).toList();
 
     // Sort
@@ -114,10 +110,10 @@ class FlightController extends GetxController {
   }
 
   // Get unique cabin classes for filter
-  // List<String> get uniqueCabinClasses {
-  //   return fareItineraries
-  //       .map((i) => i.originDestinations.first.segment.cabinClassText)
-  //       .toSet()
-  //       .toList();
-  // }
+  List<String> get uniqueCabinClasses {
+    return fareItineraries
+        .map((i) => i.originDestinations.first.segment.airlineName)
+        .toSet()
+        .toList();
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:flights/controllers/trip_details_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ class FlightDetailsScreen extends StatelessWidget {
 
   FlightDetailsScreen({required this.itinerary});
 
+  final TripDetailsController tripController = Get.put(TripDetailsController());
   final AirlineController airlineController = Get.find<AirlineController>();
 
   @override
@@ -201,7 +203,44 @@ class FlightDetailsScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
+            // Inside body Column in FlightDetailsScreen
+            const SizedBox(height: 20),
 
+            Obx(() {
+              if (tripController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final trip = tripController.tripDetails.value?.tripDetailsResult.travelItinerary;
+              if (trip == null) return const Text('No trip details available.');
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Passenger Details',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ...trip.itineraryInfo.customerInfos.map((c) => ListTile(
+                    leading: const Icon(Icons.person),
+                    title: Text('${c.passengerTitle} ${c.passengerFirstName} ${c.passengerLastName}'),
+                    subtitle: Text('${c.passengerType} | ${c.passengerNationality}'),
+                  )),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Extra Services',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ...trip.itineraryInfo.extraServices.map((s) => ListTile(
+                    leading: const Icon(Icons.add_shopping_cart),
+                    title: Text(s.description),
+                    trailing: Text('${s.serviceCost.currencyCode} ${s.serviceCost.amount}'),
+                  )),
+                ],
+              );
+            }),
           ],
         ),
       ),

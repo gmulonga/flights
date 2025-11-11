@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flights/controllers/airline_controller.dart';
+import 'package:flights/controllers/trip_details_controller.dart';
 import 'package:flights/screen/filter_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -30,24 +31,8 @@ class HomeScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(
-              'RTM → STN',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: Colors.black87),
-            onPressed: () {
-              // Search functionality
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -232,8 +217,9 @@ class HomeScreen extends StatelessWidget {
     final duration = '${segment.journeyDuration}m';
 
     return Card(
+      color: Colors.white,
       margin: EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
@@ -244,10 +230,8 @@ class HomeScreen extends StatelessWidget {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              // Header: Airline + Price
               Row(
                 children: [
-                  // Airline Logo
                   Container(
                     width: 40,
                     height: 40,
@@ -411,11 +395,6 @@ class HomeScreen extends StatelessWidget {
               // Footer
               Row(
                 children: [
-                  _buildInfoChip(
-                    icon: Icons.event_seat,
-                    label: '${itinerary.totalPassengers} seats',
-                    color: Colors.green,
-                  ),
                   SizedBox(width: 8),
                   _buildInfoChip(
                     icon: itinerary.isRefundable ? Icons.check_circle : Icons.cancel,

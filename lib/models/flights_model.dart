@@ -75,7 +75,17 @@ class FareItinerary {
       'ValidatingAirlineCode': validatingAirlineCode,
     };
   }
+
+  double get totalFare {
+    final totalFareAmount =
+        fareInfo.totalFares?.totalFare ?? 0.0;
+    return totalFareAmount;
+  }
+
+  bool get isRefundable =>
+      fareInfo.isRefundable?.toLowerCase() == 'yes';
 }
+
 
 class AirItineraryFareInfo {
   final String fareSourceCode;
@@ -162,7 +172,7 @@ class OriginDestinationOption {
 
   Map<String, dynamic> toJson() {
     return {
-      'FlightSegment': segment.toJson(),
+      'FlightSegment': segment,
       'StopQuantity': stopQuantity,
       'SeatsRemaining': {'Number': seatsRemaining},
     };
@@ -170,45 +180,36 @@ class OriginDestinationOption {
 }
 
 class FlightSegment {
-  final String departureAirport;
-  final String arrivalAirport;
-  final String departureTime;
-  final String arrivalTime;
+  final String airlineCode;
   final String airlineName;
-  final String flightNumber;
+  final String cabinClassText;
+  final DateTime departureDateTime;
+  final DateTime arrivalDateTime;
+  final String departureAirportCode;
+  final String arrivalAirportCode;
   final String journeyDuration;
 
   FlightSegment({
-    required this.departureAirport,
-    required this.arrivalAirport,
-    required this.departureTime,
-    required this.arrivalTime,
+    required this.airlineCode,
     required this.airlineName,
-    required this.flightNumber,
+    required this.cabinClassText,
+    required this.departureDateTime,
+    required this.arrivalDateTime,
+    required this.departureAirportCode,
+    required this.arrivalAirportCode,
     required this.journeyDuration,
   });
 
   factory FlightSegment.fromJson(Map<String, dynamic> json) {
     return FlightSegment(
-      departureAirport: json['DepartureAirportLocationCode'] ?? '',
-      arrivalAirport: json['ArrivalAirportLocationCode'] ?? '',
-      departureTime: json['DepartureDateTime'] ?? '',
-      arrivalTime: json['ArrivalDateTime'] ?? '',
+      airlineCode: json['MarketingAirlineCode'] ?? '',
       airlineName: json['MarketingAirlineName'] ?? '',
-      flightNumber: json['FlightNumber'] ?? '',
+      cabinClassText: json['CabinClassText'] ?? '',
+      departureDateTime: DateTime.parse(json['DepartureDateTime']),
+      arrivalDateTime: DateTime.parse(json['ArrivalDateTime']),
+      departureAirportCode: json['DepartureAirportLocationCode'] ?? '',
+      arrivalAirportCode: json['ArrivalAirportLocationCode'] ?? '',
       journeyDuration: json['JourneyDuration'] ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'DepartureAirportLocationCode': departureAirport,
-      'ArrivalAirportLocationCode': arrivalAirport,
-      'DepartureDateTime': departureTime,
-      'ArrivalDateTime': arrivalTime,
-      'MarketingAirlineName': airlineName,
-      'FlightNumber': flightNumber,
-      'JourneyDuration': journeyDuration,
-    };
   }
 }
