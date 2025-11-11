@@ -15,11 +15,11 @@ class FlightDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final segment = itinerary.originDestinations.first.segment;
-    final airline = airlineController.getAirlineByCode(segment.airlineName);
+    final airline = airlineController.getAirlineByCode(segment.airlineCode);
     final fare = itinerary.fareInfo.totalFares;
 
-    final departureTime = DateFormat('HH:mm').format(DateTime.parse(segment.departureTime));
-    final arrivalTime = DateFormat('HH:mm').format(DateTime.parse(segment.arrivalTime));
+    final departureTime = DateFormat('HH:mm').format(segment.departureDateTime);
+    final arrivalTime = DateFormat('HH:mm').format(segment.arrivalDateTime);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -36,9 +36,9 @@ class FlightDetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Airline Info
             Card(
-              elevation: 2,
+              color: Colors.white,
+              elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -64,7 +64,7 @@ class FlightDetailsScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Flight ${segment.flightNumber}',
+                            'Flight ${segment.cabinClassText}',
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],
@@ -77,9 +77,9 @@ class FlightDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Route info
             Card(
-              elevation: 2,
+              color: Colors.white,
+              elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -92,7 +92,7 @@ class FlightDetailsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                segment.departureAirport,
+                                segment.departureAirportCode,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
@@ -123,7 +123,7 @@ class FlightDetailsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                segment.arrivalAirport,
+                                segment.arrivalAirportCode,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
@@ -164,9 +164,9 @@ class FlightDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Fare details
             Card(
-              elevation: 2,
+              color: Colors.white,
+              elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -202,27 +202,6 @@ class FlightDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // CTA button
-            ElevatedButton.icon(
-              onPressed: () {
-                Get.snackbar(
-                  'Booking Coming Soon',
-                  'You can integrate a booking API later.',
-                  backgroundColor: Colors.blue[50],
-                  colorText: Colors.black87,
-                );
-              },
-              icon: const Icon(Icons.shopping_bag_outlined),
-              label: const Text('Book This Flight'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
           ],
         ),
       ),
