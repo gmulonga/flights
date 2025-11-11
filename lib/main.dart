@@ -1,3 +1,4 @@
+import 'package:flights/services/flight_service.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -29,9 +30,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  final FlightService _flightService = FlightService();
+
   int _counter = 0;
 
   void _incrementCounter() {
+    _flightService.loadFlights();
     setState(() {
       _counter++;
     });
