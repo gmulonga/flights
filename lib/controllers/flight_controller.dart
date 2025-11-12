@@ -3,7 +3,6 @@ import 'package:flights/services/flight_service.dart';
 import 'package:get/get.dart';
 
 class FlightController extends GetxController {
-  // Store complete fare itineraries instead of just segments
   final fareItineraries = <FareItinerary>[].obs;
   final filteredItineraries = <FareItinerary>[].obs;
   final isLoading = false.obs;
@@ -11,7 +10,6 @@ class FlightController extends GetxController {
 
   final FlightService _flightService = FlightService();
 
-  // Filter state
   final selectedCabinClasses = <String>[].obs;
   final selectedAirlines = <String>[].obs;
   final maxPrice = RxDouble(double.infinity);
@@ -31,9 +29,8 @@ class FlightController extends GetxController {
 
       final data = await _flightService.loadFlights();
 
-      // Data is already a list of FareItinerary objects
-      fareItineraries.assignAll(data);  // Changed this
-      filteredItineraries.assignAll(data);  // Changed this
+      fareItineraries.assignAll(data);
+      filteredItineraries.assignAll(data);
 
       // Calculate price range for filter
       if (data.isNotEmpty) {

@@ -31,7 +31,7 @@ class AirlineController extends GetxController {
             (a) => a.airLineCode.toUpperCase() == code.toUpperCase(),
       );
     } catch (_) {
-      return null; // If not found
+      return null;
     }
   }
 }

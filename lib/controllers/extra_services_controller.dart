@@ -2,7 +2,6 @@ import 'package:flights/models/extra_service_model.dart';
 import 'package:flights/services/flight_service.dart';
 import 'package:get/get.dart';
 
-
 class ExtraServicesController extends GetxController {
   var isLoading = true.obs;
   var extraServices = Rxn<ExtraServicesResponseModel>();
