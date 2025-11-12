@@ -1,12 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flights/controllers/airline_controller.dart';
-import 'package:flights/controllers/trip_details_controller.dart';
 import 'package:flights/screen/filter_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flights/controllers/flight_controller.dart';
 import 'package:intl/intl.dart';
-
 import 'flight_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,22 +14,17 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Flights',
-              style: TextStyle(
-                color: Colors.black87,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        title: const Text(
+          'Flights',
+          style: TextStyle(
+            color: Color(0xFF1A1A1A),
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Column(
@@ -40,25 +33,43 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (flightController.isLoading.value) {
-                return _buildLoadingState();
+                return _buildStateView(
+                  icon: null,
+                  title: 'Loading flights...',
+                  showProgress: true,
+                );
               }
 
               if (flightController.errorMessage.value.isNotEmpty) {
-                return _buildErrorState(flightController.errorMessage.value);
+                return _buildStateView(
+                  icon: Icons.error_outline,
+                  iconColor: Colors.red.shade300,
+                  title: 'Oops!',
+                  subtitle: flightController.errorMessage.value,
+                  actionLabel: 'Retry',
+                  onAction: () => flightController.loadFlights(),
+                );
               }
 
               if (flightController.filteredItineraries.isEmpty) {
-                return _buildEmptyState();
+                return _buildStateView(
+                  icon: Icons.flight_takeoff,
+                  iconColor: Colors.grey.shade300,
+                  title: 'No flights found',
+                  subtitle: 'Try adjusting your filters',
+                  actionLabel: 'Clear Filters',
+                  onAction: () => flightController.resetFilters(),
+                );
               }
 
               return RefreshIndicator(
                 onRefresh: () => flightController.loadFlights(),
+                color: Colors.blue.shade700,
                 child: ListView.builder(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   itemCount: flightController.filteredItineraries.length,
                   itemBuilder: (context, index) {
-                    final itinerary = flightController.filteredItineraries[index];
-                    return _buildFlightCard(context, itinerary);
+                    return _buildFlightCard(context, flightController.filteredItineraries[index]);
                   },
                 ),
               );
@@ -71,47 +82,39 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildFilterBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Obx(() => _buildSortButton()),
+          Expanded(child: Obx(() => _buildSortButton())),
+          const SizedBox(width: 12),
+          _buildActionButton(
+            icon: Icons.tune,
+            onTap: () => Get.to(() => FilterScreen()),
+            color: Colors.blue.shade700,
           ),
-          SizedBox(width: 12),
-          _buildFilterButton(),
-          SizedBox(width: 12),
           Obx(() {
             final hasFilters = flightController.selectedCabinClasses.isNotEmpty ||
                 flightController.selectedAirlines.isNotEmpty;
             return hasFilters
-                ? InkWell(
-              onTap: () => flightController.resetFilters(),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Clear',
-                  style: TextStyle(
-                    color: Colors.red[700],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                ? Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: _buildActionButton(
+                icon: Icons.close,
+                onTap: () => flightController.resetFilters(),
+                color: Colors.red.shade600,
               ),
             )
-                : SizedBox.shrink();
+                : const SizedBox.shrink();
           }),
         ],
       ),
@@ -119,91 +122,92 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSortButton() {
-    final sortOptions = {
+    const sortOptions = {
       'price_asc': 'Price: Low to High',
       'price_desc': 'Price: High to Low',
       'duration': 'Duration',
     };
 
     return InkWell(
-      onTap: () {
-        Get.bottomSheet(
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sort by',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                ...sortOptions.entries.map((entry) {
-                  return Obx(() => RadioListTile<String>(
-                    title: Text(entry.value),
-                    value: entry.key,
-                    groupValue: flightController.sortBy.value,
-                    onChanged: (value) {
-                      flightController.sortBy.value = value!;
-                      flightController.applyFilters();
-                      Get.back();
-                    },
-                  ));
-                }),
-              ],
-            ),
-          ),
-        );
-      },
+      onTap: () => _showSortSheet(sortOptions),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.blue.shade100),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sort, size: 18, color: Colors.blue[700]),
-            SizedBox(width: 8),
+            Icon(Icons.sort, size: 18, color: Colors.blue.shade700),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 sortOptions[flightController.sortBy.value] ?? 'Sort',
                 style: TextStyle(
-                  color: Colors.blue[700],
+                  color: Colors.blue.shade700,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue[700]),
+            Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue.shade700),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFilterButton() {
-    return InkWell(
-      onTap: () {
-        Get.to(() => FilterScreen());
-      },
-      child: Container(
-        padding: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.blue[700],
-          borderRadius: BorderRadius.circular(8),
+  void _showSortSheet(Map<String, String> options) {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Icon(Icons.tune, color: Colors.white, size: 20),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Sort by',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ...options.entries.map((entry) {
+              return Obx(() => RadioListTile<String>(
+                title: Text(entry.value, style: const TextStyle(fontSize: 15)),
+                value: entry.key,
+                groupValue: flightController.sortBy.value,
+                activeColor: Colors.blue.shade700,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (value) {
+                  flightController.sortBy.value = value!;
+                  flightController.applyFilters();
+                  Get.back();
+                },
+              ));
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required IconData icon, required VoidCallback onTap, required Color color}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
   }
@@ -211,195 +215,120 @@ class HomeScreen extends StatelessWidget {
   Widget _buildFlightCard(BuildContext context, dynamic itinerary) {
     final segment = itinerary.originDestinations.first.segment;
     final airline = airlineController.getAirlineByCode(segment.airlineCode);
+    final depTime = DateFormat('HH:mm').format(segment.departureDateTime);
+    final arrTime = DateFormat('HH:mm').format(segment.arrivalDateTime);
 
-    final departureTime = DateFormat('HH:mm').format(segment.departureDateTime);
-    final arrivalTime = DateFormat('HH:mm').format(segment.arrivalDateTime);
-    final duration = '${segment.journeyDuration}m';
-
-    return Card(
-      color: Colors.white,
-      margin: EdgeInsets.only(bottom: 16),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
-        onTap: () {
-          Get.to(() => FlightDetailsScreen(itinerary: itinerary));
-        },
+        onTap: () => Get.to(() => FlightDetailsScreen(itinerary: itinerary)),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: airline?.airLineLogo != null
                         ? CachedNetworkImage(
                       imageUrl: airline!.airLineLogo,
                       fit: BoxFit.contain,
-                      placeholder: (context, url) =>
-                          Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      errorWidget: (context, url, error) =>
-                          Icon(Icons.flight, color: Colors.grey),
+                      errorWidget: (_, __, ___) => Icon(Icons.flight, color: Colors.blue.shade300),
                     )
-                        : Icon(Icons.flight, color: Colors.grey),
+                        : Icon(Icons.flight, color: Colors.blue.shade300),
                   ),
-                  SizedBox(width: 12),
-                  // Airline Name
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           segment.airlineName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           segment.cabinClassText,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.grey[600], fontSize: 13),
                         ),
                       ],
                     ),
                   ),
-                  // Price
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         '\$${itinerary.totalFare.toStringAsFixed(0)}',
                         style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: 22,
+                          color: Colors.blue.shade700,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        'Total',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
+                      Text('Total', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                     ],
                   ),
                 ],
               ),
-
-              SizedBox(height: 16),
-
-              // Flight Route
+              const SizedBox(height: 20),
               Row(
                 children: [
-                  // Departure
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          departureTime,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          segment.departureAirportCode,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Duration indicator
+                  _buildTimeColumn(depTime, segment.departureAirportCode, false),
                   Expanded(
                     child: Column(
                       children: [
+                        Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade200, Colors.blue.shade400],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 4),
-                              child: Icon(
-                                Icons.flight_takeoff,
-                                size: 16,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: Colors.grey[300],
-                              ),
+                            Icon(Icons.access_time, size: 12, color: Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${segment.journeyDuration}m',
+                              style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          duration,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
                       ],
                     ),
                   ),
-
-                  // Arrival
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          arrivalTime,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          segment.arrivalAirportCode,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildTimeColumn(arrTime, segment.arrivalAirportCode, true),
                 ],
               ),
-
-              SizedBox(height: 12),
-
-              // Footer
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  SizedBox(width: 8),
-                  _buildInfoChip(
+                  _buildBadge(
                     icon: itinerary.isRefundable ? Icons.check_circle : Icons.cancel,
                     label: itinerary.isRefundable ? 'Refundable' : 'Non-refundable',
-                    color: itinerary.isRefundable ? Colors.green : Colors.orange,
+                    color: itinerary.isRefundable ? Colors.green.shade600 : Colors.orange.shade600,
                   ),
                 ],
               ),
@@ -410,113 +339,89 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
+  Widget _buildTimeColumn(String time, String code, bool alignEnd) {
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          time,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+        ),
+        const SizedBox(height: 4),
+        Text(code, style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
+  Widget _buildBadge({required IconData icon, required String label, required Color color}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
-          SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildStateView({
+    IconData? icon,
+    Color? iconColor,
+    required String title,
+    String? subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+    bool showProgress = false,
+  }) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text(
-            'Loading flights...',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(String message) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-          SizedBox(height: 16),
-          Text(
-            'Oops!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (showProgress) CircularProgressIndicator(color: Colors.blue.shade700),
+            if (icon != null) Icon(icon, size: 72, color: iconColor ?? Colors.grey.shade400),
+            SizedBox(height: showProgress || icon != null ? 20 : 0),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: showProgress ? 16 : 22,
+                fontWeight: FontWeight.bold,
+                color: showProgress ? Colors.grey[600] : const Color(0xFF1A1A1A),
+              ),
             ),
-          ),
-          SizedBox(height: 8),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => flightController.loadFlights(),
-            icon: Icon(Icons.refresh),
-            label: Text('Retry'),
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.flight_takeoff, size: 64, color: Colors.grey[300]),
-          SizedBox(height: 16),
-          Text(
-            'No flights found',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Try adjusting your filters',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-          SizedBox(height: 24),
-          TextButton(
-            onPressed: () => flightController.resetFilters(),
-            child: Text('Clear Filters'),
-          ),
-        ],
+            if (subtitle != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600], fontSize: 15),
+              ),
+            ],
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 28),
+              ElevatedButton(
+                onPressed: onAction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: Text(actionLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

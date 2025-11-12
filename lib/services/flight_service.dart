@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flights/models/airline_model.dart';
+import 'package:flights/models/extra_service_model.dart';
 import 'package:flights/models/flights_model.dart';
 import 'package:flights/models/trip_details_model.dart';
 import 'package:flutter/services.dart';
@@ -23,5 +24,12 @@ class FlightService {
     final String response = await rootBundle.loadString('assets/json/trip-details.json');
     final data = jsonDecode(response);
     return TripDetailsResponseModel.fromJson(data);
+  }
+
+  Future<ExtraServicesResponseModel> fetchExtraServices() async {
+    final response = await rootBundle.loadString('assets/json-files/extra_services.json');
+    final data = json.decode(response);
+
+    return ExtraServicesResponseModel.fromJson(data);
   }
 }
