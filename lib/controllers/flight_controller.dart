@@ -16,7 +16,7 @@ class FlightController extends GetxController {
   final selectedAirlines = <String>[].obs;
   final maxPrice = RxDouble(double.infinity);
   final minPrice = RxDouble(0.0);
-  final sortBy = 'price_asc'.obs; // price_asc, price_desc, duration
+  final sortBy = 'price_asc'.obs;
 
   @override
   void onInit() {

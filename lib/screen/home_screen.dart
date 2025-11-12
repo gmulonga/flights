@@ -324,12 +324,14 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildBadge(
                     icon: itinerary.isRefundable ? Icons.check_circle : Icons.cancel,
                     label: itinerary.isRefundable ? 'Refundable' : 'Non-refundable',
                     color: itinerary.isRefundable ? Colors.green.shade600 : Colors.orange.shade600,
                   ),
+                  Text("Seats Remainig: ${itinerary.originDestinations[0].seatsRemaining}", style: TextStyle(fontWeight: FontWeight.bold),),
                 ],
               ),
             ],
