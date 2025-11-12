@@ -25,7 +25,6 @@ class AirlineController extends GetxController {
     }
   }
 
-  /// Find airline by its code
   Airline? getAirlineByCode(String code) {
     try {
       return airlines.firstWhere(

@@ -97,7 +97,7 @@ class FilterScreen extends StatelessWidget {
                 ? 1000
                 : flightController.fareItineraries
                 .map((i) => i.fareInfo.totalFares.totalFare)
-                .reduce((a, b) => int.parse(a as String) > b ? a : b),
+                .reduce((a, b) => a > b ? a : b),
             divisions: 20,
             activeColor: Colors.blue[700],
             onChanged: (RangeValues values) {
